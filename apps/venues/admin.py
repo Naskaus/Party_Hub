@@ -81,4 +81,8 @@ class BarAdmin(admin.ModelAdmin):
         
         return format_html(''.join(badges))
     hardware_count_display.short_description = 'Hardware'
+    
+    def get_queryset(self, request):
+        """Prefetch hardware_items for list display."""
+        return super().get_queryset(request).prefetch_related('hardware_items')
 
