@@ -264,33 +264,78 @@
   - Custom User model avec rôles (admin/member)
   - Template `base.html` avec TailwindCSS CDN + HTMX + Alpine.js
   - `python manage.py check` → 0 issues
-  - Prochaine étape: Phase 2 (Login/Logout, RBAC)
 
 - **[2026-01-06]** Phase 2: User & Auth terminée ✅
   - Login/Logout views avec sessions 30 jours
   - LoginForm avec styling TailwindCSS
-  - Templates: login.html, calendar.html (placeholder)
-  - URL routing configuré pour toutes les apps
   - Superuser créé: admin / admin123
   - Flow testé en browser: login → redirect → calendrier ✓
-  - Prochaine étape: Phase 3 (Bar, ThemePeriod models)
 
 - **[2026-01-06]** Phase 3: Venues & Themes terminée ✅
   - Model `Bar` avec hardware_specs JSONField
   - Model `ThemePeriod` avec colors et period unique
   - Admin customisé avec badges screens et color swatches
-  - Seed data: 3 bars (Neon Club, Skyline, Underground), 2 thèmes (Jan/Feb 2026)
-  - Admin testé en browser ✓
-  - Prochaine étape: Phase 4 (Event model, deliverables)
+  - Seed data: 7 bars (Bangkok + Pattaya)
 
 - **[2026-01-06]** Phase 4: Events & Deliverables terminée ✅
   - Model `Event` avec M2M bars, FK theme, J-7 deadline logic
   - Model `DeliverableTemplate` lié aux bars (hardware-based)
   - Model `EventDeliverable` avec workflow status (todo → approved)
   - Auto-génération des deliverables via signal m2m_changed
-  - Admin avec health badges, deadline countdown, inline deliverables
-  - Vue calendrier dynamique avec navigation mois et event indicators
-  - Vue event_list avec status badges colorés
-  - Vue event_detail avec overview, venues, et deliverables list
-  - 3 events de test, 15 deliverables auto-générés
-  - Prochaine étape: Phase 5 (Asset upload, link to deliverables)
+  - Vue calendrier dynamique avec navigation mois
+  - 10 events Q1 2026, 168 deliverables auto-générés
+
+- **[2026-01-06]** Phase 5: Asset Upload terminée ✅
+  - Model `Asset` avec auto file-type detection
+  - Upload view avec HTMX support
+  - Status auto-update (TODO → IN_PROGRESS on upload)
+  - Asset display dans event_detail avec expandable rows
+
+- **[2026-01-06]** Phase 6: UX Improvements terminée ✅
+  - **HardwareItem Model**: Remplace JSON par structure (screen, print, deco, uniform)
+  - **Color Picker**: HTML5 widget dans admin ThemePeriod
+  - **Event Details**: Sidebar desktop avec theme + starred deliverables
+  - **is_starred**: Champ sur EventDeliverable, toggle dans admin
+  - **PDF Export**: xhtml2pdf, sélection d'assets, download button
+  - Bug fixes: templates split lines corrigés
+
+- **[2026-01-06]** Déploiement PythonAnywhere ✅
+  - URL: https://partyhub-naskaus.pythonanywhere.com
+  - User: Naskaus
+  - Virtualenv: /home/Naskaus/.virtualenvs/partyhub
+  - Project: /home/Naskaus/PartyHub
+  - WSGI: config.settings.production
+  - DB: SQLite3 avec chemin absolu (BASE_DIR / 'db.sqlite3')
+
+## 6. ÉTAT ACTUEL (06 Jan 2026)
+
+### ✅ Fonctionnel
+- Calendrier avec events Q1 2026
+- 7 bars (Bangkok + Pattaya)
+- 10 events, 168 deliverables
+- Asset upload avec HTMX
+- Starred deliverables + sidebar panel
+- PDF export avec sélection d'assets
+
+### 🔄 À faire (Phase 7+)
+- Comments/mentions sur deliverables
+- Notifications email J-7
+- Vue Matrice de Production
+
+### 📁 Structure App
+```
+apps/
+├── accounts/    # User model, login/logout
+├── venues/      # Bar, HardwareItem models
+├── planning/    # Event, ThemePeriod, Deliverable, PDF export
+└── assets/      # Asset upload et storage
+```
+
+### 🚀 Commandes Déploiement
+```bash
+cd /home/Naskaus/PartyHub
+git pull origin main
+pip install -r requirements.txt
+python manage.py migrate
+# Reload via onglet Web
+```
