@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load planning_tags %}
+
+{% block title %}Calendar{% endblock %}
+{% block page_title %}Calendar{% endblock %}
+{% block page_subtitle %}{{ month_name }} {{ year }}{% if theme %} • {{ theme.name }}{% endif %}{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'admin:planning_event_add' %}" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium 
+          rounded-lg transition flex items-center gap-2">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+    </svg>
+    New Event
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Month Navigation & Filters -->
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <!-- Month Navigation -->
+        <div class="flex items-center gap-2">
+            <a href="?year={{ prev_year }}&month={{ prev_month }}" class="p-2 rounded-lg hover:bg-white/10 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </a>
+            <span class="text-lg font-semibold text-white px-4">{{ month_name }} {{ year }}</span>
+            <a href="?year={{ next_year }}&month={{ next_month }}" class="p-2 rounded-lg hover:bg-white/10 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </a>
+            <a href="{% url 'planning:calendar' %}"
+                class="ml-2 px-3 py-1 text-sm text-gray-400 hover:text-white bg-white/5 rounded-lg transition">
+                Today
+            </a>
+        </div>
+
+        <!-- Filters -->
+        <div class="flex items-center gap-3">
+            <select class="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-300
+                          focus:outline-none focus:border-primary-500">
+                <option>All Venues</option>
+                {% for bar in bars %}
+                <option value="{{ bar.pk }}">{{ bar.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="glass rounded-2xl p-6">
+        <!-- Days of Week Header -->
+        <div class="grid grid-cols-7 gap-2 mb-4">
+            <div class="text-center text-sm font-medium text-gray-400 py-2">Mon</div>
+            <div class="text-center text-sm font-medium text-gray-400 py-2">Tue</div>
+            <div class="text-center text-sm font-medium text-gray-400 py-2">Wed</div>
+            <div class="text-center text-sm font-medium text-gray-400 py-2">Thu</div>
+            <div class="text-center text-sm font-medium text-gray-400 py-2">Fri</div>
+            <div class="text-center text-sm font-medium text-gray-400 py-2">Sat</div>
+            <div class="text-center text-sm font-medium text-gray-400 py-2">Sun</div>
+        </div>
+
+        <!-- Calendar Days Grid -->
+        <div class="grid grid-cols-7 gap-2">
+            {% for week in month_days %}
+            {% for day in week %}
+            {% if day == 0 %}
+            <!-- Empty day -->
+            <div class="aspect-square p-2 rounded-lg bg-white/5 opacity-30"></div>
+            {% else %}
+            <!-- Day with potential events -->
+            <div
+                class="aspect-square p-2 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition
+                                flex flex-col items-start relative
+                                {% if day == today.day and month == today.month and year == today.year %}ring-2 ring-primary-500{% endif %}">
+                <span
+                    class="text-sm {% if day == today.day and month == today.month and year == today.year %}text-primary-400 font-bold{% else %}text-gray-300{% endif %}">
+                    {{ day }}
+                </span>
+
+                <!-- Event indicators -->
+                {% if day in events_by_day %}
+                <div class="absolute bottom-1 left-1 right-1 flex flex-wrap gap-1">
+                    {% for event in events_by_day|get_item:day %}
+                    <a href="{% url 'planning:event_detail' event.pk %}" class="w-full text-xs truncate px-1 py-0.5 rounded
+                                      {% if event.health_status == 'green' %}bg-green-500/30 text-green-300
+                                      {% elif event.health_status == 'orange' %}bg-orange-500/30 text-orange-300
+                                      {% else %}bg-red-500/30 text-red-300{% endif %}" title="{{ event.name }}">
+                        {{ event.name|truncatechars:12 }}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Upcoming Events List -->
+    <div class="glass rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-white">This Month's Events</h3>
+            <a href="{% url 'planning:event_list' %}" class="text-sm text-primary-400 hover:text-primary-300">
+                View all →
+            </a>
+        </div>
+
+        {% with month_events=events_by_day.values|flatten_list %}
+        {% if events_by_day %}
+        <div class="space-y-3">
+            {% for day, day_events in events_by_day.items %}
+            {% for event in day_events %}
+            <a href="{% url 'planning:event_detail' event.pk %}"
+                class="flex items-center gap-4 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition group">
+                <!-- Date -->
+                <div
+                    class="flex-shrink-0 w-14 h-14 rounded-lg bg-primary-500/20 flex flex-col items-center justify-center">
+                    <span class="text-xs text-primary-400 uppercase">{{ event.date|date:"M" }}</span>
+                    <span class="text-xl font-bold text-white">{{ event.date|date:"d" }}</span>
+                </div>
+
+                <!-- Info -->
+                <div class="flex-1 min-w-0">
+                    <h4 class="font-medium text-white group-hover:text-primary-400 transition truncate">
+                        {{ event.name }}
+                    </h4>
+                    <p class="text-sm text-gray-400">
+                        {% for bar in event.bars.all %}{{ bar.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                    </p>
+                </div>
+
+                <!-- Status -->
+                <div class="flex-shrink-0">
+                    {% if event.health_status == 'green' %}
+                    <span class="px-2 py-1 text-xs rounded-full bg-green-500/20 text-green-400">✓ Ready</span>
+                    {% elif event.health_status == 'orange' %}
+                    <span class="px-2 py-1 text-xs rounded-full bg-orange-500/20 text-orange-400">◐ In Progress</span>
+                    {% else %}
+                    <span class="px-2 py-1 text-xs rounded-full bg-red-500/20 text-red-400 animate-pulse">⚠ Late</span>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-gray-400">
+            <p>No events this month.</p>
+            <a href="{% url 'admin:planning_event_add' %}" class="text-primary-400 hover:underline mt-2 inline-block">
+                Create your first event →
+            </a>
+        </div>
+        {% endif %}
+        {% endwith %}
+    </div>
+</div>
+{% endblock %}

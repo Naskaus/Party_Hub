@@ -1,0 +1,22 @@
+<!-- Partial template for a single asset card (used by HTMX) -->
+<div class="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
+    {% if asset.file_type == 'image' %}
+    <img src="{{ asset.file.url }}" alt="" class="w-10 h-10 object-cover rounded">
+    {% elif asset.file_type == 'video' %}
+    <span class="w-10 h-10 flex items-center justify-center bg-white/10 rounded text-xl">🎬</span>
+    {% elif asset.file_type == 'pdf' %}
+    <span class="w-10 h-10 flex items-center justify-center bg-white/10 rounded text-xl">📄</span>
+    {% else %}
+    <span class="w-10 h-10 flex items-center justify-center bg-white/10 rounded text-xl">📎</span>
+    {% endif %}
+
+    <div class="flex-1 min-w-0">
+        <p class="text-sm text-white truncate">{{ asset.original_filename }}</p>
+        <p class="text-xs text-gray-500">{{ asset.file_size_display }} • {{ asset.created_at|date:"M d, H:i" }}</p>
+    </div>
+
+    <a href="{{ asset.file.url }}" target="_blank"
+        class="px-2 py-1 text-xs bg-white/10 rounded text-gray-300 hover:bg-white/20 transition">
+        View
+    </a>
+</div>

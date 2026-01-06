@@ -1,0 +1,32 @@
+# Django Core
+Django>=5.0,<6.0
+
+# Database
+psycopg2-binary>=2.9.9      # PostgreSQL adapter (use psycopg2 on PythonAnywhere)
+
+# Environment & Config
+django-environ>=0.11.2       # .env file support
+
+# Static Files (Production)
+whitenoise>=6.6.0            # Serve static files efficiently
+
+# Image Processing
+Pillow>=10.2.0               # Image compression on upload
+
+# HTMX Integration
+django-htmx>=1.17.0          # HTMX middleware and utilities
+
+# Forms
+django-widget-tweaks>=1.5.0  # Better form rendering with Tailwind
+
+# Security (Production)
+django-csp>=3.8              # Content Security Policy headers
+
+# Development Tools
+django-debug-toolbar>=4.2.0  # Debug toolbar (dev only)
+django-extensions>=3.2.3     # Shell plus, etc.
+
+# Code Quality (Dev)
+black>=24.1.0                # Code formatter
+isort>=5.13.0                # Import sorter
+flake8>=7.0.0                # Linter

@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ bar.name }}{% endblock %}
+{% block page_title %}{{ bar.name }}{% endblock %}
+{% block page_subtitle %}📍 {{ bar.location|default:"No location" }}{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'venues:bar_list' %}" class="px-4 py-2 text-sm text-gray-300 hover:text-white transition">
+    ← Back to Venues
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl space-y-6">
+    <!-- Status Card -->
+    <div class="glass rounded-2xl p-6">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-primary-500/20 flex items-center justify-center">
+                <span class="text-2xl">🍸</span>
+            </div>
+            <div>
+                <p class="text-sm text-gray-400">Status</p>
+                <p class="text-lg font-medium text-white">
+                    {% if bar.is_active %}
+                    <span class="text-green-400">● Active</span>
+                    {% else %}
+                    <span class="text-gray-500">○ Inactive</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hardware Specs -->
+    <div class="glass rounded-2xl p-6">
+        <h3 class="text-lg font-semibold text-white mb-4">Hardware Specifications</h3>
+
+        {% if bar.hardware_specs.screens %}
+        <div class="mb-6">
+            <p class="text-sm text-gray-400 mb-3">Screens ({{ bar.hardware_specs.screens|length }})</p>
+            <div class="grid gap-3 sm:grid-cols-2">
+                {% for screen in bar.hardware_specs.screens %}
+                <div class="bg-white/5 rounded-lg p-4">
+                    <p class="font-medium text-white">{{ screen.name }}</p>
+                    <p class="text-sm text-gray-400 mt-1">
+                        {{ screen.resolution }} • {{ screen.format|upper }}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if bar.hardware_specs.print %}
+        <div>
+            <p class="text-sm text-gray-400 mb-3">Print Materials ({{ bar.hardware_specs.print|length }})</p>
+            <div class="grid gap-3 sm:grid-cols-2">
+                {% for item in bar.hardware_specs.print %}
+                <div class="bg-white/5 rounded-lg p-4">
+                    <p class="font-medium text-white">{{ item.name }}</p>
+                    <p class="text-sm text-gray-400 mt-1">
+                        {{ item.size }} • {{ item.dpi }}dpi • {{ item.format|upper }}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if not bar.hardware_specs.screens and not bar.hardware_specs.print %}
+        <p class="text-gray-400">No hardware specs configured.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

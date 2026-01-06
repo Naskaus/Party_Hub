@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ event.name }}{% endblock %}
+{% block page_title %}{{ event.name }}{% endblock %}
+{% block page_subtitle %}{{ event.date|date:"F d, Y" }}{% endblock %}
+
+{% block header_actions %}
+<div class="flex items-center gap-2">
+    <a href="{% url 'planning:event_list' %}" class="px-3 py-2 text-sm text-gray-400 hover:text-white transition">
+        ← Back
+    </a>
+    <a href="{% url 'admin:planning_event_change' event.pk %}"
+        class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-lg transition">
+        Edit in Admin
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl space-y-6">
+    <!-- Status Overview -->
+    <div class="glass rounded-2xl p-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Health Status -->
+            <div class="text-center p-4 bg-white/5 rounded-xl">
+                <div class="text-3xl mb-2">
+                    {% if event.health_status == 'green' %}🟢
+                    {% elif event.health_status == 'orange' %}🟠
+                    {% else %}🔴{% endif %}
+                </div>
+                <p class="text-sm text-gray-400">Status</p>
+                <p class="font-medium text-white">
+                    {% if event.health_status == 'green' %}Ready
+                    {% elif event.health_status == 'orange' %}In Progress
+                    {% else %}Late{% endif %}
+                </p>
+            </div>
+
+            <!-- Days Until Event -->
+            <div class="text-center p-4 bg-white/5 rounded-xl">
+                <div class="text-3xl mb-2">📅</div>
+                <p class="text-sm text-gray-400">Event</p>
+                <p class="font-medium text-white">
+                    {% if event.days_until_event > 0 %}
+                    In {{ event.days_until_event }} days
+                    {% elif event.days_until_event == 0 %}
+                    Today!
+                    {% else %}
+                    Past
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- J-7 Deadline -->
+            <div class="text-center p-4 bg-white/5 rounded-xl">
+                <div class="text-3xl mb-2">⏰</div>
+                <p class="text-sm text-gray-400">J-7 Deadline</p>
+                <p class="font-medium {% if event.is_past_deadline %}text-red-400{% else %}text-white{% endif %}">
+                    {{ event.deadline|date:"M d" }}
+                    {% if event.is_past_deadline %}
+                    <span class="text-xs">(overdue)</span>
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Deliverables Count -->
+            <div class="text-center p-4 bg-white/5 rounded-xl">
+                <div class="text-3xl mb-2">📦</div>
+                <p class="text-sm text-gray-400">Deliverables</p>
+                <p class="font-medium text-white">{{ event.deliverables.count }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Venues -->
+    <div class="glass rounded-2xl p-6">
+        <h3 class="text-lg font-semibold text-white mb-4">Venues</h3>
+        <div class="flex flex-wrap gap-3">
+            {% for bar in event.bars.all %}
+            <a href="{% url 'venues:bar_detail' bar.pk %}"
+                class="px-4 py-2 bg-white/5 rounded-lg hover:bg-white/10 transition">
+                <span class="text-white">🍸 {{ bar.name }}</span>
+                <span class="text-xs text-gray-400 ml-2">{{ bar.location }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Brief -->
+    {% if event.brief %}
+    <div class="glass rounded-2xl p-6">
+        <h3 class="text-lg font-semibold text-white mb-4">Creative Brief</h3>
+        <p class="text-gray-300 whitespace-pre-wrap">{{ event.brief }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Deliverables -->
+    <div class="glass rounded-2xl p-6">
+        <h3 class="text-lg font-semibold text-white mb-4">Deliverables</h3>
+
+        {% if event.deliverables.exists %}
+        <div class="space-y-3">
+            {% for deliverable in event.deliverables.all %}
+            <div class="bg-white/5 rounded-xl overflow-hidden
+                        {% if deliverable.is_late %}border border-red-500/50{% endif %}" x-data="{ expanded: false }">
+                <!-- Main Row -->
+                <div class="flex items-center gap-4 p-4 cursor-pointer" @click="expanded = !expanded">
+                    <!-- Status Icon -->
+                    <div class="flex-shrink-0">
+                        {% if deliverable.status == 'approved' %}
+                        <span class="text-2xl">✅</span>
+                        {% elif deliverable.status == 'review' %}
+                        <span class="text-2xl">👀</span>
+                        {% elif deliverable.status == 'in_progress' %}
+                        <span class="text-2xl">🔄</span>
+                        {% elif deliverable.status == 'changes' %}
+                        <span class="text-2xl">⚠️</span>
+                        {% else %}
+                        <span class="text-2xl">📋</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Info -->
+                    <div class="flex-1">
+                        <p class="font-medium text-white">{{ deliverable.template.name }}</p>
+                        <p class="text-sm text-gray-400">
+                            {{ deliverable.template.specs }}
+                            {% if deliverable.template.bar %}• {{ deliverable.template.bar.name }}{% endif %}
+                        </p>
+                    </div>
+
+                    <!-- Asset Count -->
+                    <div class="flex-shrink-0">
+                        {% if deliverable.assets.exists %}
+                        <span class="px-2 py-1 text-xs bg-primary-500/20 rounded-full text-primary-400">
+                            {{ deliverable.assets.count }} file{% if deliverable.assets.count > 1 %}s{% endif %}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Status Badge -->
+                    <div class="flex-shrink-0">
+                        {% if deliverable.status == 'approved' %}
+                        <span class="px-3 py-1 text-xs rounded-full bg-green-500/20 text-green-400">Approved</span>
+                        {% elif deliverable.status == 'review' %}
+                        <span class="px-3 py-1 text-xs rounded-full bg-yellow-500/20 text-yellow-400">Under
+                            Review</span>
+                        {% elif deliverable.status == 'in_progress' %}
+                        <span class="px-3 py-1 text-xs rounded-full bg-blue-500/20 text-blue-400">In Progress</span>
+                        {% elif deliverable.status == 'changes' %}
+                        <span class="px-3 py-1 text-xs rounded-full bg-red-500/20 text-red-400">Changes Requested</span>
+                        {% else %}
+                        <span class="px-3 py-1 text-xs rounded-full bg-gray-500/20 text-gray-400">To Do</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Expand Arrow -->
+                    <div class="flex-shrink-0">
+                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': expanded }"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Expanded Content -->
+                <div x-show="expanded" x-collapse class="px-4 pb-4 pt-2 border-t border-white/10">
+                    <!-- Existing Assets -->
+                    {% if deliverable.assets.exists %}
+                    <div class="space-y-2 mb-4">
+                        <p class="text-xs text-gray-500 uppercase tracking-wider">Uploaded Files</p>
+                        {% for asset in deliverable.assets.all %}
+                        <div class="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
+                            {% if asset.file_type == 'image' %}
+                            <img src="{{ asset.file.url }}" alt="" class="w-10 h-10 object-cover rounded">
+                            {% else %}
+                            <span
+                                class="w-10 h-10 flex items-center justify-center bg-white/10 rounded text-xl">📎</span>
+                            {% endif %}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-white truncate">{{ asset.original_filename }}</p>
+                                <p class="text-xs text-gray-500">{{ asset.file_size_display }}</p>
+                            </div>
+                            <a href="{{ asset.file.url }}" target="_blank"
+                                class="px-2 py-1 text-xs bg-white/10 rounded text-gray-300 hover:bg-white/20">View</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Upload Form -->
+                    <form action="{% url 'assets:upload_asset' deliverable.pk %}" method="post"
+                        enctype="multipart/form-data" class="flex gap-3">
+                        {% csrf_token %}
+                        <input type="file" name="file" required class="flex-1 text-sm text-gray-400 file:mr-4 file:py-2 file:px-4
+                                      file:rounded-lg file:border-0 file:text-sm file:font-medium
+                                      file:bg-primary-500/20 file:text-primary-400
+                                      hover:file:bg-primary-500/30">
+                        <button type="submit" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm 
+                                       rounded-lg transition">
+                            Upload
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-gray-400">
+            <p>No deliverables generated for this event.</p>
+            <p class="text-sm mt-2">Add bars to the event to auto-generate deliverables.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
