@@ -1,221 +1,225 @@
-# Party Hub - PythonAnywhere Deployment Guide
-
-## Overview
-Deploy the Marketing Event Planner on PythonAnywhere.com with SQLite (no PostgreSQL needed for MVP).
+# Party Hub - Déploiement PythonAnywhere
+## Configuration: Naskaus
 
 ---
 
-## Step 1: Create PythonAnywhere Account
+## 📋 Infos de ton Setup
 
-1. Go to https://www.pythonanywhere.com
-2. Sign up for a **free** account (or paid for custom domain)
-3. Note your username: `yourusername.pythonanywhere.com`
+| Paramètre | Valeur |
+|-----------|--------|
+| **URL** | `https://partyhub-naskaus.pythonanywhere.com` |
+| **Source code** | `/home/Naskaus/PartyHub` |
+| **Working directory** | `/home/Naskaus/` |
+| **WSGI file** | `/var/www/partyhub-naskaus_pythonanywhere_com_wsgi.py` |
+| **Python** | 3.13 |
+| **GitHub** | `https://github.com/Naskaus/Party_Hub.git` |
 
 ---
 
-## Step 2: Clone Repository
+## 🚀 Étape 1: Clone le Repo
 
-Open a **Bash console** from the Dashboard:
+Ouvre un **Bash console** sur PythonAnywhere et exécute:
 
 ```bash
-# Clone from GitHub
-cd ~
-git clone https://github.com/Naskaus/Party_Hub.git
+# Supprimer le dossier vide s'il existe
+rm -rf /home/Naskaus/PartyHub
 
-# Navigate to project
-cd Party_Hub
+# Cloner depuis GitHub
+cd /home/Naskaus
+git clone https://github.com/Naskaus/Party_Hub.git PartyHub
+
+# Vérifier que tout est là
+ls PartyHub/
 ```
 
+Tu devrais voir: `apps/`, `config/`, `templates/`, `manage.py`, etc.
+
 ---
 
-## Step 3: Create Virtual Environment
+## 🐍 Étape 2: Créer Virtualenv + Installer Dépendances
 
 ```bash
-# Create virtual environment (use Python 3.11+)
-mkvirtualenv --python=/usr/bin/python3.11 partyhub
+# Créer virtualenv avec Python 3.13
+mkvirtualenv --python=/usr/bin/python3.13 partyhub
 
-# Activate it
-workon partyhub
+# Aller dans le projet
+cd /home/Naskaus/PartyHub
 
-# Install dependencies
+# Installer toutes les dépendances
 pip install -r requirements.txt
+pip install python-dotenv
 ```
 
 ---
 
-## Step 4: Configure Environment Variables
-
-Create `.env` file in project root:
+## ⚙️ Étape 3: Créer le fichier .env
 
 ```bash
-nano ~/Party_Hub/.env
-```
-
-Add these settings:
-
-```env
+# Créer le fichier de configuration
+cat > /home/Naskaus/PartyHub/.env << 'EOF'
 DEBUG=False
-SECRET_KEY=your-super-secret-key-change-this-!!!
-ALLOWED_HOSTS=yourusername.pythonanywhere.com,localhost
-
-# Database (SQLite is fine for MVP)
-DATABASE_URL=sqlite:///db.sqlite3
+SECRET_KEY=change-this-to-a-random-50-character-string-here!!!
+ALLOWED_HOSTS=partyhub-naskaus.pythonanywhere.com,localhost
+EOF
 ```
 
-> **Tip**: Generate a secret key with: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`
+> **Important**: Génère une vraie clé secrète avec:
+> ```bash
+> python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+> ```
+> Puis remplace `SECRET_KEY` dans le fichier `.env`
 
 ---
 
-## Step 5: Database Setup
+## 🗄️ Étape 4: Initialiser la Base de Données
 
 ```bash
-cd ~/Party_Hub
+cd /home/Naskaus/PartyHub
 workon partyhub
 
-# Run migrations
+# Créer les tables
 python manage.py migrate
 
-# Create superuser
+# Créer ton compte admin
 python manage.py createsuperuser
-# Enter: admin / your-email / your-password
+# → Username: admin
+# → Email: ton@email.com
+# → Password: ton-mot-de-passe
 
-# Collect static files
+# Collecter les fichiers static
 python manage.py collectstatic --noinput
 
-# Optional: Load demo data
+# Créer les dossiers media
+mkdir -p /home/Naskaus/PartyHub/media
+
+# OPTIONNEL: Charger les données demo (7 bars, 10 events, etc.)
 python seed_real_data.py
 ```
 
 ---
 
-## Step 6: Configure Web App
+## 📝 Étape 5: Configurer le WSGI
 
-1. Go to **Web** tab in PythonAnywhere Dashboard
-2. Click **"Add a new web app"**
-3. Select **"Manual configuration"** (NOT Django)
-4. Choose **Python 3.11**
-
-### 6.1 Source Code Path
-```
-/home/yourusername/Party_Hub
-```
-
-### 6.2 Virtualenv Path
-```
-/home/yourusername/.virtualenvs/partyhub
-```
-
-### 6.3 WSGI Configuration
-
-Click on the WSGI config file link and **replace all content** with:
+1. Va dans l'onglet **Web** sur PythonAnywhere
+2. Clique sur le lien WSGI: `/var/www/partyhub-naskaus_pythonanywhere_com_wsgi.py`
+3. **SUPPRIME TOUT** le contenu existant
+4. **COLLE** ce code:
 
 ```python
 import os
 import sys
 from pathlib import Path
 
-# Add project to path
-project_home = '/home/yourusername/Party_Hub'
+# Add project to Python path
+project_home = '/home/Naskaus/PartyHub'
 if project_home not in sys.path:
     sys.path.insert(0, project_home)
 
-# Set Django settings
-os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings'
-
-# Load environment variables from .env
+# Load environment variables from .env file
 from dotenv import load_dotenv
 env_path = Path(project_home) / '.env'
 load_dotenv(env_path)
 
-# Import Django application
+# Set Django settings module
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings'
+
+# Get WSGI application
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 ```
 
+5. **Sauvegarde** le fichier (Ctrl+S ou bouton Save)
+
 ---
 
-## Step 7: Static & Media Files
+## 🔧 Étape 6: Configurer l'onglet Web
 
-In the **Web** tab, add these static file mappings:
+### 6.1 Virtualenv Path
+
+Dans la section **Virtualenv**, entre ce chemin:
+
+```
+/home/Naskaus/.virtualenvs/partyhub
+```
+
+Puis appuie sur Entrée.
+
+### 6.2 Static Files
+
+Dans la section **Static files**, clique sur "Enter URL" pour ajouter:
 
 | URL | Directory |
 |-----|-----------|
-| `/static/` | `/home/yourusername/Party_Hub/staticfiles/` |
-| `/media/` | `/home/yourusername/Party_Hub/media/` |
-
-Make sure staticfiles directory exists:
-
-```bash
-mkdir -p ~/Party_Hub/staticfiles
-mkdir -p ~/Party_Hub/media
-```
+| `/static/` | `/home/Naskaus/PartyHub/staticfiles/` |
+| `/media/` | `/home/Naskaus/PartyHub/media/` |
 
 ---
 
-## Step 8: Reload and Test
+## 🔄 Étape 7: RELOAD!
 
-1. Click **"Reload"** button on Web tab
-2. Visit `https://yourusername.pythonanywhere.com`
-3. You should see the login page!
+1. Clique le gros bouton vert **"Reload partyhub-naskaus.pythonanywhere.com"** en haut de la page
+2. Attends quelques secondes
+3. Visite: **https://partyhub-naskaus.pythonanywhere.com**
 
 ---
 
-## Troubleshooting
+## 🎉 C'est Live!
 
-### Check Error Logs
-- Go to **Web** tab → **Error log**
-- Check for import errors, missing env vars, etc.
+Tu devrais voir la page de login. Connecte-toi avec ton admin/password créé à l'étape 4.
 
-### Common Issues
+---
 
-| Problem | Solution |
-|---------|----------|
-| "Module not found" | Check virtualenv path, run `pip install -r requirements.txt` |
-| "DisallowedHost" | Add your domain to `ALLOWED_HOSTS` in `.env` |
-| "Static files 404" | Run `python manage.py collectstatic` |
-| "Database errors" | Run `python manage.py migrate` |
+## 🔧 Troubleshooting
 
-### Reload After Changes
+### Voir les erreurs
+Onglet **Web** → scroll en bas → **Error log** → clique pour ouvrir
 
-After any code changes:
+### Erreurs Communes
+
+| Erreur | Cause | Solution |
+|--------|-------|----------|
+| `ModuleNotFoundError: django` | Virtualenv pas activé | Vérifie le path virtualenv dans Web tab |
+| `ModuleNotFoundError: dotenv` | python-dotenv manquant | `workon partyhub && pip install python-dotenv` |
+| `DisallowedHost` | ALLOWED_HOSTS mal configuré | Vérifie `.env`, ajoute ton domaine |
+| `OperationalError: no such table` | Migrations pas faites | `python manage.py migrate` |
+| `Static files 404` | collectstatic pas fait | `python manage.py collectstatic --noinput` |
+
+---
+
+## 🔄 Mises à jour futures
+
+Quand tu modifies le code localement et push sur GitHub:
+
 ```bash
-cd ~/Party_Hub
+# Sur PythonAnywhere Bash console
+cd /home/Naskaus/PartyHub
 git pull origin main
+
 workon partyhub
+pip install -r requirements.txt
 python manage.py migrate
 python manage.py collectstatic --noinput
 ```
 
-Then click **"Reload"** on Web tab.
+Puis **Reload** dans l'onglet Web.
 
 ---
 
-## Optional: PostgreSQL (Paid Plan)
+## ✅ Checklist
 
-For production with more users, upgrade to PostgreSQL:
-
-1. PythonAnywhere creates DB for you (Postgres on paid plans)
-2. Update `.env`:
-```env
-DATABASE_URL=postgres://username:password@yourusername-1234.postgres.pythonanywhere-services.com:5432/yourusername$dbname
-```
-3. Run migrations: `python manage.py migrate`
-
----
-
-## Quick Checklist
-
-- [ ] Account created on PythonAnywhere
-- [ ] Repo cloned to `~/Party_Hub`
-- [ ] Virtualenv created and activated
-- [ ] `.env` file configured
-- [ ] Database migrated
-- [ ] Superuser created
-- [ ] Static files collected
-- [ ] WSGI configured
-- [ ] Static/Media paths set
-- [ ] App reloaded and working
+- [ ] `git clone` dans `/home/Naskaus/PartyHub`
+- [ ] Virtualenv `partyhub` créé avec Python 3.13
+- [ ] `pip install -r requirements.txt` + `python-dotenv`
+- [ ] Fichier `.env` créé avec `SECRET_KEY` et `ALLOWED_HOSTS`
+- [ ] `python manage.py migrate` exécuté
+- [ ] `python manage.py createsuperuser` exécuté
+- [ ] `python manage.py collectstatic` exécuté
+- [ ] WSGI file configuré avec le code ci-dessus
+- [ ] Virtualenv path: `/home/Naskaus/.virtualenvs/partyhub`
+- [ ] Static files mappés: `/static/` et `/media/`
+- [ ] **Reload** cliqué
+- [ ] Site accessible à https://partyhub-naskaus.pythonanywhere.com 🎉
 
 ---
 
-**Your app will be live at:** `https://yourusername.pythonanywhere.com` 🎉
+**URL Live:** https://partyhub-naskaus.pythonanywhere.com

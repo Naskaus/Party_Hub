@@ -16,9 +16,12 @@ ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=[
     'localhost',
 ])
 
-# Database - PostgreSQL for production
+# Database - Use absolute path for SQLite (important for PythonAnywhere!)
 DATABASES = {
-    'default': env.db('DATABASE_URL', default='sqlite:///db.sqlite3'),
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 # Security settings for HTTPS
