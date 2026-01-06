@@ -102,3 +102,75 @@ class Bar(models.Model):
             })
         
         return types
+
+
+class HardwareItem(models.Model):
+    """
+    Individual hardware or asset specification for a bar.
+    
+    Replaces the JSON-based hardware_specs for better admin editing.
+    
+    Categories:
+        - screen: Digital displays, LED walls, TVs
+        - print: Posters, flyers, printed materials
+        - deco: Decoration ideas and references
+        - uniform: Staff uniform ideas and references
+    """
+    
+    class Category(models.TextChoices):
+        SCREEN = 'screen', 'Screen / Display'
+        PRINT = 'print', 'Print Material'
+        DECO = 'deco', 'Decoration Idea'
+        UNIFORM = 'uniform', 'Uniform Idea'
+    
+    bar = models.ForeignKey(
+        Bar,
+        on_delete=models.CASCADE,
+        related_name='hardware_items'
+    )
+    
+    category = models.CharField(
+        max_length=20,
+        choices=Category.choices,
+        default=Category.SCREEN
+    )
+    
+    name = models.CharField(
+        max_length=100,
+        help_text="Name of the item (e.g., 'Main LED Wall', 'Staff Polo')"
+    )
+    
+    specs = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Specifications (e.g., '1920x1080 mp4', 'A3 300dpi pdf')"
+    )
+    
+    notes = models.TextField(
+        blank=True,
+        help_text="Additional notes or description"
+    )
+    
+    # For deco/uniform: reference image
+    reference_image = models.ImageField(
+        upload_to='hardware_refs/',
+        blank=True,
+        null=True,
+        help_text="Reference image for decoration or uniform ideas"
+    )
+    
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this item is currently in use"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Hardware Item'
+        verbose_name_plural = 'Hardware Items'
+        ordering = ['bar', 'category', 'name']
+    
+    def __str__(self):
+        return f"{self.name} ({self.bar.name})"
+

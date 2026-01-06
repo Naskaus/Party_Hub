@@ -115,3 +115,70 @@ def event_detail(request, pk):
     }
     return render(request, 'planning/event_detail.html', context)
 
+
+@login_required
+def export_event_pdf(request, pk):
+    """
+    Export event details and selected assets as PDF.
+    
+    GET: Show asset selection form
+    POST: Generate and download PDF
+    """
+    from io import BytesIO
+    from django.http import HttpResponse
+    from django.template.loader import get_template
+    from xhtml2pdf import pisa
+    
+    event = get_object_or_404(
+        Event.objects.prefetch_related(
+            'bars', 
+            'deliverables__template__bar',
+            'deliverables__assets'
+        ),
+        pk=pk
+    )
+    
+    if request.method == 'POST':
+        # Get selected deliverable IDs
+        selected_ids = request.POST.getlist('deliverables')
+        selected_deliverables = event.deliverables.filter(id__in=selected_ids)
+        
+        # Collect selected assets
+        selected_assets = []
+        for deliv in selected_deliverables:
+            for asset in deliv.assets.all():
+                if str(asset.id) in request.POST.getlist('assets'):
+                    selected_assets.append(asset)
+        
+        # Render PDF template
+        template = get_template('planning/event_pdf.html')
+        context = {
+            'event': event,
+            'deliverables': selected_deliverables,
+            'assets': selected_assets,
+            'request': request,
+        }
+        html = template.render(context)
+        
+        # Generate PDF
+        result = BytesIO()
+        pdf = pisa.pisaDocument(BytesIO(html.encode('UTF-8')), result)
+        
+        if not pdf.err:
+            response = HttpResponse(result.getvalue(), content_type='application/pdf')
+            filename = f"{event.name.replace(' ', '_')}_{event.date}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+        
+        # Error fallback
+        return HttpResponse('Error generating PDF', status=500)
+    
+    # GET: Show selection form
+    context = {
+        'page_title': f'Export: {event.name}',
+        'page_subtitle': 'Select items to include in PDF',
+        'event': event,
+    }
+    return render(request, 'planning/export_select.html', context)
+
+

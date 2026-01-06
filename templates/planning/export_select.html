@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Export: {{ event.name }}{% endblock %}
+{% block page_title %}Export PDF{% endblock %}
+{% block page_subtitle %}{{ event.name }} - {{ event.date|date:"F d, Y" }}{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'planning:event_detail' event.pk %}"
+    class="px-3 py-2 text-sm text-gray-400 hover:text-white transition">
+    ← Back to Event
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl">
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Event Summary -->
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-white mb-4">📋 Event Info</h3>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <span class="text-gray-400">Date:</span>
+                    <span class="text-white ml-2">{{ event.date|date:"F d, Y" }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400">Venues:</span>
+                    <span class="text-white ml-2">{{ event.bars.count }}</span>
+                </div>
+                {% if event.theme %}
+                <div>
+                    <span class="text-gray-400">Theme:</span>
+                    <span class="text-white ml-2">{{ event.theme.name }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Deliverable Selection -->
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-white mb-4">📦 Select Deliverables</h3>
+            <div class="space-y-3">
+                {% for deliv in event.deliverables.all %}
+                <label class="flex items-start gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 cursor-pointer">
+                    <input type="checkbox" name="deliverables" value="{{ deliv.id }}" {% if deliv.is_starred %}checked{%
+                        endif %} class="mt-1 rounded bg-white/10 border-white/20 text-primary-500">
+                    <div class="flex-1">
+                        <p class="text-white font-medium">{{ deliv.template.name }}</p>
+                        <p class="text-sm text-gray-400">{{ deliv.template.bar.name }} • {{ deliv.get_status_display }}
+                        </p>
+
+                        <!-- Assets for this deliverable -->
+                        {% if deliv.assets.exists %}
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            {% for asset in deliv.assets.all %}
+                            <label
+                                class="inline-flex items-center gap-2 px-2 py-1 bg-white/10 rounded text-xs cursor-pointer">
+                                <input type="checkbox" name="assets" value="{{ asset.id }}" checked
+                                    class="rounded bg-white/10 border-white/20 text-green-500">
+                                {% if asset.file_type == 'image' %}📷{% elif asset.file_type == 'video' %}🎬{% else
+                                %}📎{% endif %}
+                                {{ asset.original_filename|truncatechars:20 }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </label>
+                {% empty %}
+                <p class="text-gray-400">No deliverables for this event.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex gap-4">
+            <button type="submit"
+                class="px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition">
+                📥 Download PDF
+            </button>
+            <a href="{% url 'planning:event_detail' event.pk %}"
+                class="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

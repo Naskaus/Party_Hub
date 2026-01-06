@@ -23,12 +23,27 @@ class EventDeliverableInline(admin.TabularInline):
 
 @admin.register(ThemePeriod)
 class ThemePeriodAdmin(admin.ModelAdmin):
-    """Admin interface for ThemePeriod with color preview."""
+    """Admin interface for ThemePeriod with color picker."""
     
     list_display = ('name', 'period_display', 'color_preview', 'is_active')
     list_filter = ('year', 'is_active')
     search_fields = ('name', 'description')
     ordering = ('-year', '-month')
+    
+    class Media:
+        css = {
+            'all': ['admin/css/color-picker.css']  # Optional custom styles
+        }
+    
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        """Use HTML5 color picker for color fields."""
+        if db_field.name in ['primary_color', 'accent_color']:
+            from django import forms
+            kwargs['widget'] = forms.TextInput(attrs={
+                'type': 'color',
+                'style': 'width: 100px; height: 40px; padding: 2px; cursor: pointer;'
+            })
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
     
     fieldsets = (
         (None, {
@@ -165,8 +180,9 @@ class EventAdmin(admin.ModelAdmin):
 class EventDeliverableAdmin(admin.ModelAdmin):
     """Admin interface for EventDeliverable."""
     
-    list_display = ('template', 'event', 'status_badge', 'assigned_to', 'is_enabled')
-    list_filter = ('status', 'is_enabled', 'event__date')
+    list_display = ('template', 'event', 'status_badge', 'is_starred', 'assigned_to', 'is_enabled')
+    list_filter = ('status', 'is_starred', 'is_enabled', 'event__date')
+    list_editable = ('is_starred',)  # Quick toggle in list view
     search_fields = ('event__name', 'template__name')
     ordering = ('event__date', 'template__name')
     

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>{{ event.name }} - Event Report</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.4;
+            color: #1a1a1a;
+        }
+
+        h1 {
+            font-size: 24pt;
+            margin-bottom: 5pt;
+            color: #111;
+        }
+
+        h2 {
+            font-size: 16pt;
+            border-bottom: 2px solid #333;
+            padding-bottom: 5pt;
+            margin-top: 25pt;
+            margin-bottom: 10pt;
+        }
+
+        h3 {
+            font-size: 13pt;
+            margin-top: 15pt;
+            margin-bottom: 5pt;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30pt;
+        }
+
+        .subtitle {
+            font-size: 14pt;
+            color: #666;
+        }
+
+        .info-grid {
+            width: 100%;
+            margin-bottom: 20pt;
+        }
+
+        .info-grid td {
+            padding: 5pt 10pt;
+            vertical-align: top;
+        }
+
+        .info-label {
+            font-weight: bold;
+            width: 120pt;
+            color: #555;
+        }
+
+        .brief {
+            background: #f5f5f5;
+            padding: 15pt;
+            margin: 15pt 0;
+            border-left: 4px solid #333;
+        }
+
+        .deliverable-item {
+            border: 1px solid #ddd;
+            padding: 10pt;
+            margin-bottom: 10pt;
+            page-break-inside: avoid;
+        }
+
+        .deliverable-name {
+            font-weight: bold;
+            font-size: 13pt;
+        }
+
+        .deliverable-venue {
+            color: #666;
+            font-size: 10pt;
+        }
+
+        .deliverable-status {
+            display: inline-block;
+            padding: 2pt 8pt;
+            font-size: 9pt;
+            border-radius: 10pt;
+            background: #eee;
+        }
+
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-in_progress {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-review {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-todo {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .asset-list {
+            margin-top: 10pt;
+        }
+
+        .asset-item {
+            display: inline-block;
+            margin-right: 10pt;
+            margin-bottom: 10pt;
+        }
+
+        .asset-image {
+            max-width: 200pt;
+            max-height: 150pt;
+            border: 1px solid #ddd;
+        }
+
+        .asset-video {
+            background: #f0f0f0;
+            padding: 10pt;
+            border: 1px solid #ddd;
+        }
+
+        .asset-name {
+            font-size: 9pt;
+            color: #666;
+            margin-top: 3pt;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 9pt;
+            color: #999;
+            padding: 10pt;
+        }
+
+        .color-swatch {
+            display: inline-block;
+            width: 20pt;
+            height: 20pt;
+            border: 1px solid #ccc;
+            margin-right: 5pt;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>{{ event.name }}</h1>
+        <p class="subtitle">{{ event.date|date:"l, F d, Y" }}</p>
+    </div>
+
+    <!-- Event Info -->
+    <h2>Event Details</h2>
+    <table class="info-grid">
+        <tr>
+            <td class="info-label">Date</td>
+            <td>{{ event.date|date:"F d, Y" }}</td>
+        </tr>
+        <tr>
+            <td class="info-label">Venues</td>
+            <td>{% for bar in event.bars.all %}{{ bar.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+        </tr>
+        {% if event.theme %}
+        <tr>
+            <td class="info-label">Theme</td>
+            <td>
+                {{ event.theme.name }}
+                {% if event.theme.primary_color %}
+                <span class="color-swatch" style="background: {{ event.theme.primary_color }};"></span>
+                {% endif %}
+                {% if event.theme.accent_color %}
+                <span class="color-swatch" style="background: {{ event.theme.accent_color }};"></span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td class="info-label">Status</td>
+            <td>{{ event.health_status|title }} - {{ event.deliverables.count }} deliverables</td>
+        </tr>
+    </table>
+
+    {% if event.brief %}
+    <div class="brief">
+        <strong>Creative Brief:</strong><br>
+        {{ event.brief|linebreaks }}
+    </div>
+    {% endif %}
+
+    {% if event.description %}
+    <p><strong>Description:</strong> {{ event.description }}</p>
+    {% endif %}
+
+    <!-- Deliverables -->
+    {% if deliverables %}
+    <h2>Selected Deliverables</h2>
+    {% for deliv in deliverables %}
+    <div class="deliverable-item">
+        <span class="deliverable-name">{{ deliv.template.name }}</span>
+        <span class="deliverable-status status-{{ deliv.status }}">{{ deliv.get_status_display }}</span>
+        <br>
+        <span class="deliverable-venue">{{ deliv.template.bar.name }} • {{ deliv.template.specs }}</span>
+
+        {% if deliv.notes %}
+        <p style="margin-top: 5pt; font-size: 10pt; color: #666;">{{ deliv.notes }}</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Assets -->
+    {% if assets %}
+    <h2>Selected Assets</h2>
+    <div class="asset-list">
+        {% for asset in assets %}
+        <div class="asset-item">
+            {% if asset.file_type == 'image' %}
+            <img src="{{ asset.file.path }}" class="asset-image" alt="{{ asset.original_filename }}">
+            {% elif asset.file_type == 'video' %}
+            <div class="asset-video">
+                🎬 {{ asset.original_filename }}<br>
+                <a href="{{ asset.file.url }}" style="font-size: 9pt;">{{ asset.file.url }}</a>
+            </div>
+            {% else %}
+            <div class="asset-video">
+                📎 {{ asset.original_filename }}
+            </div>
+            {% endif %}
+            <div class="asset-name">{{ asset.original_filename }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="footer">
+        Generated on {% now "F d, Y H:i" %} | Party Hub Event Management
+    </div>
+</body>
+
+</html>

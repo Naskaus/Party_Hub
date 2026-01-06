@@ -363,6 +363,11 @@ class EventDeliverable(models.Model):
         help_text="Can disable if not needed for this specific event"
     )
     
+    is_starred = models.BooleanField(
+        default=False,
+        help_text="Highlight this deliverable in the event panel"
+    )
+    
     notes = models.TextField(
         blank=True,
         help_text="Notes or feedback about this deliverable"
