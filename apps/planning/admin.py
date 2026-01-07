@@ -80,22 +80,12 @@ class ThemePeriodAdmin(admin.ModelAdmin):
 
 @admin.register(DeliverableTemplate)
 class DeliverableTemplateAdmin(admin.ModelAdmin):
-    """Admin interface for DeliverableTemplate."""
+    """Admin interface for global DeliverableTemplate."""
     
-    list_display = ('name', 'bar', 'category', 'specs', 'is_default')
-    list_filter = ('category', 'bar', 'is_default')
+    list_display = ('name', 'category', 'specs', 'is_active')
+    list_filter = ('category', 'is_active')
     search_fields = ('name', 'specs')
     ordering = ('category', 'name')
-    
-    fieldsets = (
-        (None, {
-            'fields': ('name', 'specs', 'category')
-        }),
-        ('Association', {
-            'fields': ('bar', 'is_default'),
-            'description': 'Link to a specific bar for hardware-specific deliverables'
-        }),
-    )
 
 
 @admin.register(Event)

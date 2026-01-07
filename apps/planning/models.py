@@ -110,7 +110,7 @@ class DeliverableTemplate(models.Model):
     These are reusable templates (e.g., "Poster A3", "Cube LED Video")
     that define what kind of assets need to be created for events.
     
-    Can be linked to a specific bar (for bar-specific hardware) or global.
+    Global templates - not linked to specific bars.
     """
     
     class Category(models.TextChoices):
@@ -121,13 +121,14 @@ class DeliverableTemplate(models.Model):
     
     name = models.CharField(
         max_length=100,
+        unique=True,
         help_text="Name of the deliverable (e.g., 'Cube LED Video', 'Poster A3')"
     )
     
     specs = models.CharField(
         max_length=200,
         blank=True,
-        help_text="Technical specifications (e.g., '1024x1024 mp4', 'A3 300dpi PDF')"
+        help_text="Technical specifications (e.g., '960x192 mp4', 'A3 300dpi PDF')"
     )
     
     category = models.CharField(
@@ -137,18 +138,9 @@ class DeliverableTemplate(models.Model):
         help_text="Category of deliverable"
     )
     
-    bar = models.ForeignKey(
-        'venues.Bar',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='deliverable_templates',
-        help_text="If set, this template is specific to this bar's hardware"
-    )
-    
-    is_default = models.BooleanField(
+    is_active = models.BooleanField(
         default=True,
-        help_text="If true, auto-added to new events for the linked bar"
+        help_text="Whether this template is currently in use"
     )
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -159,8 +151,6 @@ class DeliverableTemplate(models.Model):
         ordering = ['category', 'name']
     
     def __str__(self):
-        if self.bar:
-            return f"{self.name} ({self.bar.name})"
         return self.name
 
 
