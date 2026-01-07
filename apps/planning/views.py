@@ -132,7 +132,7 @@ def export_event_pdf(request, pk):
     event = get_object_or_404(
         Event.objects.prefetch_related(
             'bars', 
-            'deliverables__template__bar',
+            'deliverables__template',
             'deliverables__assets'
         ),
         pk=pk
