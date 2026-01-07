@@ -6,6 +6,7 @@ Provides admin interface for Bar and HardwareItem models.
 
 from django.contrib import admin
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from .models import Bar, HardwareItem
 
@@ -47,7 +48,7 @@ class BarAdmin(admin.ModelAdmin):
         """Show hardware as badges."""
         items = obj.hardware.all()[:4]
         if not items:
-            return format_html('<span style="color: #999;">None</span>')
+            return mark_safe('<span style="color: #999;">None</span>')
         
         badges = []
         for item in items:
@@ -59,5 +60,5 @@ class BarAdmin(admin.ModelAdmin):
         if extra > 0:
             badges.append(f'<span style="color: #999;">+{extra}</span>')
         
-        return format_html(''.join(badges))
+        return mark_safe(''.join(badges))
     hardware_display.short_description = 'Hardware'

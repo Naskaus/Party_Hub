@@ -282,25 +282,21 @@ class Event(models.Model):
     
     def generate_deliverables(self):
         """
-        Generate EventDeliverables based on the bars' hardware specs.
+        Generate EventDeliverables from all active global templates.
         
-        Called after bars are assigned to the event.
+        Called after event is created or bars are updated.
         """
-        for bar in self.bars.all():
-            # Get templates for this bar
-            templates = DeliverableTemplate.objects.filter(
-                bar=bar,
-                is_default=True
+        # Get all active templates
+        templates = DeliverableTemplate.objects.filter(is_active=True)
+        
+        for template in templates:
+            EventDeliverable.objects.get_or_create(
+                event=self,
+                template=template,
+                defaults={
+                    'status': EventDeliverable.Status.TODO
+                }
             )
-            
-            for template in templates:
-                EventDeliverable.objects.get_or_create(
-                    event=self,
-                    template=template,
-                    defaults={
-                        'status': EventDeliverable.Status.TODO
-                    }
-                )
 
 
 class EventDeliverable(models.Model):
